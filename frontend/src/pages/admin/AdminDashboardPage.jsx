@@ -8,7 +8,8 @@ import {
   Users, Eye, MousePointerClick, Heart, MessageSquare, 
   TrendingUp, Globe, Smartphone, LogOut, RefreshCw, 
   Download, Calendar, Shield, Sparkles, Filter, ChevronRight,
-  Laptop, Compass, CheckCircle2, Clock, Calculator
+  Laptop, Compass, CheckCircle2, Clock, Calculator,
+  AlertCircle, Database
 } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { 
@@ -34,6 +35,7 @@ export const AdminDashboardPage = () => {
   const [dateRange, setDateRange] = useState('7d');
   const [activeTab, setActiveTab] = useState('overview'); // overview, traffic, funnel, products, sources, tech, feedback, waitlist
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Analytics State
   const [overview, setOverview] = useState(null);
@@ -54,6 +56,7 @@ export const AdminDashboardPage = () => {
 
   const fetchDashboardData = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const [
         ovRes,
@@ -66,7 +69,7 @@ export const AdminDashboardPage = () => {
         wlRes,
         fbRes
       ] = await Promise.all([
-        getAdminOverview(dateRange).catch(() => ({ data: {} })),
+        getAdminOverview(dateRange).catch((err) => ({ data: null, error: err })),
         getAdminTraffic(dateRange).catch(() => ({ data: [] })),
         getAdminFunnel(dateRange).catch(() => ({ data: [] })),
         getAdminProducts(dateRange).catch(() => ({ data: [] })),
@@ -76,6 +79,10 @@ export const AdminDashboardPage = () => {
         getAdminWaitlist().catch(() => ({ data: [] })),
         getAdminFeedback().catch(() => ({ data: { feedback: [], ratingDistribution: [], averageRating: 5 } }))
       ]);
+
+      if (!ovRes.data && ovRes.error) {
+        throw ovRes.error;
+      }
 
       setOverview(ovRes.data || {});
       setTraffic(tfRes.data || []);
@@ -88,6 +95,7 @@ export const AdminDashboardPage = () => {
       setFeedback(fbRes.data || { feedback: [], ratingDistribution: [], averageRating: 5 });
     } catch (e) {
       console.error('Failed to load dashboard metrics:', e);
+      setFetchError(e.message || 'Unable to connect to the analytics server. Please check your network or serverless function.');
     } finally {
       setLoading(false);
     }
@@ -230,6 +238,86 @@ export const AdminDashboardPage = () => {
 
         {/* Dashboard Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+
+          {/* Background Refresh Indicator */}
+          {loading && overview && (
+            <div className="mb-6 p-3 rounded-2xl bg-[#D97706]/15 border border-[#F59E0B]/30 flex items-center justify-between text-xs text-[#F59E0B] font-bold shadow-sm animate-pulse">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Syncing live analytics for {dateRange.toUpperCase()}...</span>
+              </div>
+              <span className="font-mono text-[10px] text-[#A88B77]">Connecting to MongoDB</span>
+            </div>
+          )}
+
+          {/* Error Banner with Retry */}
+          {fetchError && !loading && (
+            <div className="p-6 rounded-3xl bg-red-950/40 border border-red-800/60 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-red-900/40 border border-red-700/50 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-red-200">Unable to synchronize analytics</h3>
+                  <p className="text-xs text-red-300/80 mt-0.5">{fetchError}</p>
+                </div>
+              </div>
+              <button
+                onClick={fetchDashboardData}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#EA580C] hover:brightness-110 text-xs font-black uppercase text-[#190B05] flex items-center gap-2 transition-all whitespace-nowrap shadow-lg active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Retry Connection</span>
+              </button>
+            </div>
+          )}
+
+          {/* Initial Loading Skeleton State */}
+          {loading && !overview && (
+            <div className="space-y-8 animate-pulse">
+              <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#190B05] via-[#241007] to-[#190B05] border border-[#D97706]/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-[#D97706]/20 border border-[#F59E0B]/30 flex items-center justify-center flex-shrink-0">
+                    <Database className="w-6 h-6 text-[#F59E0B] animate-spin" />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-display font-black text-[#FFFBEB] flex items-center gap-2">
+                      <span>Loading Live Analytics Dashboard</span>
+                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#10B981] animate-ping" />
+                    </h2>
+                    <p className="text-xs text-[#A88B77] mt-0.5">
+                      Querying MongoDB live telemetry & aggregating KPIs... Please wait a moment on cold start.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#2E1508] border border-[#F59E0B]/20 text-xs font-mono text-[#F59E0B] font-bold">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Connecting...</span>
+                </div>
+              </div>
+
+              {/* Skeleton KPI Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="p-5 rounded-2xl bg-[#190B05] border border-[#2E1508] space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="h-3 w-20 bg-[#2E1508] rounded" />
+                      <div className="h-4 w-4 bg-[#2E1508] rounded-full" />
+                    </div>
+                    <div className="h-7 w-16 bg-[#2E1508] rounded" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Skeleton Chart Box */}
+              <div className="bg-[#190B05] p-6 rounded-3xl border border-[#2E1508] space-y-4">
+                <div className="h-4 w-48 bg-[#2E1508] rounded" />
+                <div className="h-64 bg-[#140803] rounded-2xl border border-[#2E1508]/50 flex items-center justify-center text-xs text-[#785A48] font-mono">
+                  Loading time-series charts...
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && overview && (
