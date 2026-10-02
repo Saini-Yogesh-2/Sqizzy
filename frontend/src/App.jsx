@@ -23,6 +23,7 @@ import { ComingSoonPage } from './pages/ComingSoonPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminMethodologyPage } from './pages/admin/AdminMethodologyPage';
 
 import { trackPageView, initScrollTracker } from './analytics/tracker';
 
@@ -96,6 +97,8 @@ export function App() {
               {/* Protected / Admin Routes */}
               <Route path="/admin" element={<AdminLoginPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/methodology" element={<AdminMethodologyPage />} />
+              <Route path="/admin/calculations" element={<AdminMethodologyPage />} />
 
               {/* 404 Fallback */}
               <Route path="*" element={<NotFoundPage />} />

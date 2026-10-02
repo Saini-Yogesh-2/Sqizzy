@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, 
   CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend 
@@ -8,7 +8,7 @@ import {
   Users, Eye, MousePointerClick, Heart, MessageSquare, 
   TrendingUp, Globe, Smartphone, LogOut, RefreshCw, 
   Download, Calendar, Shield, Sparkles, Filter, ChevronRight,
-  Laptop, Compass, CheckCircle2, Clock
+  Laptop, Compass, CheckCircle2, Clock, Calculator
 } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { 
@@ -160,6 +160,15 @@ export const AdminDashboardPage = () => {
               </button>
             ))}
           </div>
+
+          <Link
+            to="/admin/methodology"
+            title="View KPI calculation and telemetry formulas"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2E1508] border border-[#F59E0B]/30 text-[#F59E0B] hover:bg-[#3D1C0E] transition-all text-xs font-bold shadow-sm"
+          >
+            <Calculator className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Calculations & Logic</span>
+          </Link>
 
           <button
             onClick={fetchDashboardData}
