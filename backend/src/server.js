@@ -49,7 +49,12 @@ app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Health check endpoint
+// ── Root route — simple JSON status ────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'SQIZZY API is running correctly.' });
+});
+
+// ── JSON health check endpoint ──────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
