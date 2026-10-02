@@ -81,14 +81,14 @@ export const HomePage = ({ onOpenWaitlist }) => {
   ];
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-x-hidden">
       <SEO 
         title="SQIZZY — Peanut Butter. Rethought." 
         description="Shake. Squeeze. Drizzle. The modern all-natural squeeze peanut butter designed for zero stirring, zero oil mess, and effortless drizzling."
       />
 
       {/* 1. HERO SECTION */}
-      <section className="relative pt-8 pb-20 md:pt-16 md:pb-32 bg-gradient-to-b from-[#FDF8F0] via-[#FFFBEB] to-[#FDF8F0] overflow-hidden">
+      <section className="relative pt-8 pb-32 md:pt-16 md:pb-40 bg-gradient-to-b from-[#FDF8F0] via-[#FFFBEB] to-[#FDF8F0] overflow-visible">
         {/* Soft Background Accent Circles */}
         <div className="absolute top-10 right-1/4 w-80 sm:w-[32rem] h-80 sm:h-[32rem] bg-[#F59E0B]/15 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-10 left-10 w-96 h-96 bg-[#F97316]/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -177,12 +177,12 @@ export const HomePage = ({ onOpenWaitlist }) => {
             </div>
 
             {/* Right Column: Interactive Bottle Visual */}
-            <div className="lg:col-span-5 flex items-center justify-center relative">
+            <div className="lg:col-span-5 flex items-center justify-center relative pb-16 md:pb-20">
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="relative"
+                className="relative overflow-visible"
               >
                 <SqizzyBottle 
                   size="hero" 
