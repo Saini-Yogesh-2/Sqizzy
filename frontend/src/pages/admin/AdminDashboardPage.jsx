@@ -105,11 +105,15 @@ export const AdminDashboardPage = () => {
   };
 
   const handleExportWaitlist = () => {
-    window.open('/api/analytics/export/waitlist', '_blank');
+    const token = localStorage.getItem('sqizzy_admin_token') || '';
+    const baseUrl = import.meta.env.VITE_API_URL || '';
+    window.open(`${baseUrl}/api/analytics/export/waitlist${token ? `?token=${encodeURIComponent(token)}` : ''}`, '_blank');
   };
 
   const handleExportFeedback = () => {
-    window.open('/api/analytics/export/feedback', '_blank');
+    const token = localStorage.getItem('sqizzy_admin_token') || '';
+    const baseUrl = import.meta.env.VITE_API_URL || '';
+    window.open(`${baseUrl}/api/analytics/export/feedback${token ? `?token=${encodeURIComponent(token)}` : ''}`, '_blank');
   };
 
   if (authLoading || !isAuthenticated) {

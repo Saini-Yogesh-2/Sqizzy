@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Contact } from '../models/Contact.js';
-import { getIsConnected } from '../config/db.js';
+import { connectDB, getIsConnected } from '../config/db.js';
 import { getMemoryStore } from '../services/analyticsStore.js';
 
 const contactSchema = z.object({
@@ -28,8 +28,24 @@ export const submitContact = async (req, res, next) => {
       createdAt: new Date()
     };
 
-    if (getIsConnected()) {
+    if (process.env.MONGODB_URI) {
+      if (!getIsConnected()) {
+        const connected = await connectDB();
+        if (!connected) {
+          return res.status(503).json({
+            success: false,
+            error: 'Database connection currently unavailable. Please try again in a moment.'
+          });
+        }
+      }
+
       await Contact.create(contactDoc);
+      getMemoryStore().contacts.unshift(contactDoc);
+
+      return res.status(201).json({
+        success: true,
+        message: "Thank you for reaching out to Sqizzy! Our team will review your message."
+      });
     }
 
     getMemoryStore().contacts.unshift(contactDoc);
@@ -39,6 +55,10 @@ export const submitContact = async (req, res, next) => {
       message: "Thank you for reaching out to Sqizzy! Our team will review your message."
     });
   } catch (error) {
-    next(error);
+    console.error('Contact submission error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to save contact inquiry to the database. Please try again.'
+    });
   }
 };

@@ -1,10 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 async function request(url, options = {}) {
+  let token = null;
+  try {
+    token = localStorage.getItem('sqizzy_admin_token');
+  } catch (e) {
+    // Ignore localStorage access issues
+  }
+
   const config = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers,
     },
     credentials: 'include', // Include HTTP-only cookie

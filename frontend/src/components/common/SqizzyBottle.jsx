@@ -20,8 +20,17 @@ const SATS = [
 // ─────────────────────────────────────────────────────────────────────────────
 // PeanutButterDrip — full physics-accurate viscous PB drop animation
 // ─────────────────────────────────────────────────────────────────────────────
-const PeanutButterDrip = ({ accent = '#D97706', onDone }) => {
+const PeanutButterDrip = ({ accent = '#D97706', size = 'hero', onDone }) => {
   const uid = accent.replace('#', '');
+
+  const dripOffsets = {
+    sm:   { bottom: '-62px',  scale: 0.52 },
+    md:   { bottom: '-88px',  scale: 0.70 },
+    lg:   { bottom: '-115px', scale: 0.85 },
+    hero: { bottom: '-148px', scale: 1.00 },
+  };
+
+  const currentOffset = dripOffsets[size] || dripOffsets.hero;
 
   // All animation controllers (hook calls always at top level, always same count)
   const streamCtrl = useAnimation();
@@ -204,9 +213,10 @@ const PeanutButterDrip = ({ accent = '#D97706', onDone }) => {
     <div
       className="absolute pointer-events-none z-30"
       style={{
-        bottom: '-168px',
+        bottom: currentOffset.bottom,
         left: '50%',
-        transform: 'translateX(-50%)',
+        transform: `translateX(-50%) scale(${currentOffset.scale})`,
+        transformOrigin: 'top center',
         width: '190px',
         height: '195px',
       }}
@@ -675,6 +685,7 @@ export const SqizzyBottle = ({
             <PeanutButterDrip
               key={drizzleKey}
               accent={accentColor}
+              size={size}
               onDone={() => setShowDrip(false)}
             />
           )}

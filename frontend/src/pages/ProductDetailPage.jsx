@@ -58,7 +58,7 @@ export const ProductDetailPage = ({ onOpenWaitlist }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           
           {/* Left Column: Interactive Visual Showcase */}
-          <div className="lg:col-span-6 lg:sticky lg:top-24">
+          <div className="lg:col-span-6">
             <div className="bg-[#FFFBEB] rounded-3xl p-8 sm:p-12 border border-[#E8DCCF] shadow-sqizzy relative overflow-visible flex flex-col items-center justify-center min-h-[420px]">
               {/* Flavor Glow */}
               <div 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Feedback } from '../models/Feedback.js';
-import { getIsConnected } from '../config/db.js';
+import { connectDB, getIsConnected } from '../config/db.js';
 import { getMemoryStore } from '../services/analyticsStore.js';
 
 const feedbackSchema = z.object({
@@ -31,11 +31,27 @@ export const submitFeedback = async (req, res, next) => {
       createdAt: new Date()
     };
 
-    if (getIsConnected()) {
+    if (process.env.MONGODB_URI) {
+      if (!getIsConnected()) {
+        const connected = await connectDB();
+        if (!connected) {
+          return res.status(503).json({
+            success: false,
+            error: 'Database connection currently unavailable. Please try again in a moment.'
+          });
+        }
+      }
+
       await Feedback.create(feedbackData);
+      getMemoryStore().feedback.unshift(feedbackData);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Thanks for helping us make Sqizzy better! Your feedback has been recorded.'
+      });
     }
     
-    // Store in memory cache
+    // Store in memory cache for local sandbox test
     getMemoryStore().feedback.unshift(feedbackData);
 
     return res.status(201).json({
@@ -43,6 +59,10 @@ export const submitFeedback = async (req, res, next) => {
       message: 'Thanks for helping us make Sqizzy better! Your feedback has been recorded.'
     });
   } catch (error) {
-    next(error);
+    console.error('Feedback submission error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to save feedback to the database. Please try again.'
+    });
   }
 };

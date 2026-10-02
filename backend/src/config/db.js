@@ -1,28 +1,41 @@
 import mongoose from 'mongoose';
 
-let isConnected = false;
+let cachedPromise = null;
 
 export const connectDB = async () => {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.warn('⚠️ MONGODB_URI not provided. Running in high-performance hybrid memory store mode with full persistence support when configured.');
+    console.warn('⚠️ MONGODB_URI not provided. Running in hybrid memory store mode with full persistence support when configured.');
     return false;
   }
 
-  if (isConnected) return true;
+  if (mongoose.connection.readyState === 1) {
+    return true;
+  }
+
+  if (cachedPromise) {
+    return cachedPromise;
+  }
 
   try {
-    const conn = await mongoose.connect(uri, {
+    cachedPromise = mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
+    }).then((conn) => {
+      console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+      return true;
+    }).catch((error) => {
+      cachedPromise = null;
+      console.error('❌ MongoDB Connection Error:', error.message);
+      return false;
     });
-    isConnected = true;
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    return true;
+
+    return await cachedPromise;
   } catch (error) {
+    cachedPromise = null;
     console.error('❌ MongoDB Connection Error:', error.message);
-    console.log('ℹ️ Operating in resilient hybrid fallback mode — all operations will succeed smoothly.');
     return false;
   }
 };
 
-export const getIsConnected = () => isConnected;
+export const getIsConnected = () => mongoose.connection.readyState === 1;
+

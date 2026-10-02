@@ -25,6 +25,11 @@ export const AdminAuthProvider = ({ children }) => {
   const login = async (password) => {
     const res = await apiLogin(password);
     if (res.success) {
+      if (res.token) {
+        try {
+          localStorage.setItem('sqizzy_admin_token', res.token);
+        } catch (e) {}
+      }
       setIsAuthenticated(true);
       return { success: true };
     }
@@ -35,6 +40,9 @@ export const AdminAuthProvider = ({ children }) => {
     try {
       await apiLogout();
     } finally {
+      try {
+        localStorage.removeItem('sqizzy_admin_token');
+      } catch (e) {}
       setIsAuthenticated(false);
     }
   };

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Waitlist } from '../models/Waitlist.js';
-import { getIsConnected } from '../config/db.js';
+import { connectDB, getIsConnected } from '../config/db.js';
 import { getMemoryStore } from '../services/analyticsStore.js';
 
 const waitlistSchema = z.object({
@@ -28,16 +28,6 @@ export const joinWaitlist = async (req, res, next) => {
     const { email, name, phone, productInterest, city, source, visitorId, sessionId } = parseResult.data;
     const cleanEmail = email.toLowerCase().trim();
 
-    // Check duplicate in memory
-    const existingInMemory = getMemoryStore().waitlist.find(w => w.email === cleanEmail);
-    if (existingInMemory) {
-      return res.status(200).json({
-        success: true,
-        alreadyJoined: true,
-        message: "You're already on the Sqizzy VIP waitlist! We'll keep you updated."
-      });
-    }
-
     const waitlistDoc = {
       email: cleanEmail,
       name,
@@ -50,22 +40,46 @@ export const joinWaitlist = async (req, res, next) => {
       createdAt: new Date()
     };
 
-    if (getIsConnected()) {
-      try {
-        await Waitlist.findOneAndUpdate(
-          { email: cleanEmail },
-          { $setOnInsert: waitlistDoc },
-          { upsert: true }
-        );
-      } catch (dbErr) {
-        if (dbErr.code === 11000) {
-          return res.status(200).json({
-            success: true,
-            alreadyJoined: true,
-            message: "You're already on the Sqizzy VIP waitlist! We'll keep you updated."
+    // If MongoDB connection string is configured, enforce strict DB persistence
+    if (process.env.MONGODB_URI) {
+      if (!getIsConnected()) {
+        const connected = await connectDB();
+        if (!connected) {
+          return res.status(503).json({
+            success: false,
+            error: 'Database connection currently unavailable. Please try again in a moment.'
           });
         }
       }
+
+      // Check if already in MongoDB
+      const existingInDb = await Waitlist.findOne({ email: cleanEmail });
+      if (existingInDb) {
+        return res.status(200).json({
+          success: true,
+          alreadyJoined: true,
+          message: "You're already on the Sqizzy VIP waitlist! We'll keep you updated."
+        });
+      }
+
+      // Save directly to MongoDB
+      await Waitlist.create(waitlistDoc);
+      getMemoryStore().waitlist.unshift(waitlistDoc);
+
+      return res.status(201).json({
+        success: true,
+        message: "You're officially on the Sqizzy VIP list! You'll be the first to know when we launch."
+      });
+    }
+
+    // Fallback for local sandbox testing without MongoDB_URI
+    const existingInMemory = getMemoryStore().waitlist.find(w => w.email === cleanEmail);
+    if (existingInMemory) {
+      return res.status(200).json({
+        success: true,
+        alreadyJoined: true,
+        message: "You're already on the Sqizzy VIP waitlist! We'll keep you updated."
+      });
     }
 
     getMemoryStore().waitlist.unshift(waitlistDoc);
@@ -75,6 +89,17 @@ export const joinWaitlist = async (req, res, next) => {
       message: "You're officially on the Sqizzy VIP list! You'll be the first to know when we launch."
     });
   } catch (error) {
-    next(error);
+    if (error.code === 11000) {
+      return res.status(200).json({
+        success: true,
+        alreadyJoined: true,
+        message: "You're already on the Sqizzy VIP waitlist! We'll keep you updated."
+      });
+    }
+    console.error('Waitlist submission error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to save waitlist submission to the database. Please try again.'
+    });
   }
 };

@@ -88,7 +88,7 @@ export const HomePage = ({ onOpenWaitlist }) => {
       />
 
       {/* 1. HERO SECTION */}
-      <section className="relative pt-8 pb-32 md:pt-16 md:pb-40 bg-gradient-to-b from-[#FDF8F0] via-[#FFFBEB] to-[#FDF8F0] overflow-visible">
+      <section className="relative pt-8 pb-36 sm:pb-40 md:pb-48 bg-gradient-to-b from-[#FDF8F0] via-[#FFFBEB] to-[#FDF8F0] overflow-visible">
         {/* Soft Background Accent Circles */}
         <div className="absolute top-10 right-1/4 w-80 sm:w-[32rem] h-80 sm:h-[32rem] bg-[#F59E0B]/15 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-10 left-10 w-96 h-96 bg-[#F97316]/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -177,7 +177,7 @@ export const HomePage = ({ onOpenWaitlist }) => {
             </div>
 
             {/* Right Column: Interactive Bottle Visual */}
-            <div className="lg:col-span-5 flex items-center justify-center relative pb-16 md:pb-20">
+            <div className="lg:col-span-5 flex items-center justify-center relative pb-28 sm:pb-32 lg:pb-0">
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
