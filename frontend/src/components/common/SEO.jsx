@@ -8,16 +8,33 @@ export const SEO = ({
 }) => {
   useEffect(() => {
     // Title
-    document.title = title.includes('SQIZZY') ? title : `${title} | SQIZZY`;
+    const formattedTitle = title.includes('SQIZZY') ? title : `${title} | SQIZZY`;
+    document.title = formattedTitle;
 
-    // Meta Description
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.name = 'description';
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.content = description;
+    // Helper to set or create meta tag
+    const setMeta = (attr, key, val) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', val);
+    };
+
+    // Standard Meta
+    setMeta('name', 'description', description);
+    setMeta('name', 'title', formattedTitle);
+
+    // Open Graph
+    setMeta('property', 'og:title', formattedTitle);
+    setMeta('property', 'og:description', description);
+    setMeta('property', 'og:image', 'https://sqizzy.vercel.app/og-image.jpg');
+
+    // Twitter Card
+    setMeta('name', 'twitter:title', formattedTitle);
+    setMeta('name', 'twitter:description', description);
+    setMeta('name', 'twitter:image', 'https://sqizzy.vercel.app/og-image.jpg');
 
     // Canonical
     if (canonical) {
