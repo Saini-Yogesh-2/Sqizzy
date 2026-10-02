@@ -29,12 +29,12 @@ export const SEO = ({
     // Open Graph
     setMeta('property', 'og:title', formattedTitle);
     setMeta('property', 'og:description', description);
-    setMeta('property', 'og:image', 'https://sqizzy.vercel.app/og-image.jpg');
+    setMeta('property', 'og:image', 'https://sqizzy.vercel.app/og-image.jpg?v=2');
 
     // Twitter Card
     setMeta('name', 'twitter:title', formattedTitle);
     setMeta('name', 'twitter:description', description);
-    setMeta('name', 'twitter:image', 'https://sqizzy.vercel.app/og-image.jpg');
+    setMeta('name', 'twitter:image', 'https://sqizzy.vercel.app/og-image.jpg?v=2');
 
     // Canonical
     if (canonical) {
