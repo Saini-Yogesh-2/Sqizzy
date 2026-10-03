@@ -28,6 +28,10 @@ import { SEO } from '../../components/common/SEO';
 
 const COLORS = ['#D97706', '#F59E0B', '#EA580C', '#10B981', '#6366F1', '#EC4899', '#8B5CF6'];
 
+// 5-Minute In-Memory Dashboard Cache (keyed by dateRange)
+const dashboardCache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export const AdminDashboardPage = () => {
   const { isAuthenticated, isLoading: authLoading, logout } = useAdminAuth();
   const navigate = useNavigate();
@@ -54,7 +58,27 @@ export const AdminDashboardPage = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (forceRefresh = false) => {
+    // Check 5-minute cache first if not explicitly forced
+    if (!forceRefresh && dashboardCache.has(dateRange)) {
+      const cached = dashboardCache.get(dateRange);
+      if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        const { data } = cached;
+        setOverview(data.overview);
+        setTraffic(data.traffic);
+        setFunnel(data.funnel);
+        setProducts(data.products);
+        setSources(data.sources);
+        setDevices(data.devices);
+        setGeo(data.geo);
+        setWaitlist(data.waitlist);
+        setFeedback(data.feedback);
+        setLoading(false);
+        setFetchError(null);
+        return;
+      }
+    }
+
     setLoading(true);
     setFetchError(null);
     try {
@@ -84,15 +108,33 @@ export const AdminDashboardPage = () => {
         throw ovRes.error;
       }
 
-      setOverview(ovRes.data || {});
-      setTraffic(tfRes.data || []);
-      setFunnel(fnRes.data || []);
-      setProducts(pdRes.data || []);
-      setSources(scRes.data || { sources: [], campaigns: [] });
-      setDevices(dvRes.data || { devices: [], browsers: [], os: [] });
-      setGeo(geRes.data || { countries: [], cities: [] });
-      setWaitlist(wlRes.data || []);
-      setFeedback(fbRes.data || { feedback: [], ratingDistribution: [], averageRating: 5 });
+      const freshData = {
+        overview: ovRes.data || {},
+        traffic: tfRes.data || [],
+        funnel: fnRes.data || [],
+        products: pdRes.data || [],
+        sources: scRes.data || { sources: [], campaigns: [] },
+        devices: dvRes.data || { devices: [], browsers: [], os: [] },
+        geo: geRes.data || { countries: [], cities: [] },
+        waitlist: wlRes.data || [],
+        feedback: fbRes.data || { feedback: [], ratingDistribution: [], averageRating: 5 }
+      };
+
+      // Store in 5-minute cache
+      dashboardCache.set(dateRange, {
+        timestamp: Date.now(),
+        data: freshData
+      });
+
+      setOverview(freshData.overview);
+      setTraffic(freshData.traffic);
+      setFunnel(freshData.funnel);
+      setProducts(freshData.products);
+      setSources(freshData.sources);
+      setDevices(freshData.devices);
+      setGeo(freshData.geo);
+      setWaitlist(freshData.waitlist);
+      setFeedback(freshData.feedback);
     } catch (e) {
       console.error('Failed to load dashboard metrics:', e);
       setFetchError(e.message || 'Unable to connect to the analytics server. Please check your network or serverless function.');
@@ -103,11 +145,12 @@ export const AdminDashboardPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchDashboardData();
+      fetchDashboardData(false);
     }
   }, [isAuthenticated, dateRange]);
 
   const handleLogout = async () => {
+    dashboardCache.clear();
     await logout();
     navigate('/admin');
   };
@@ -179,7 +222,7 @@ export const AdminDashboardPage = () => {
           </Link>
 
           <button
-            onClick={fetchDashboardData}
+            onClick={() => fetchDashboardData(true)}
             title="Refresh metrics"
             className="p-2 rounded-xl bg-[#140803] border border-[#2E1508] text-[#A88B77] hover:text-[#FFFBEB] transition-colors"
           >
@@ -263,7 +306,7 @@ export const AdminDashboardPage = () => {
                 </div>
               </div>
               <button
-                onClick={fetchDashboardData}
+                onClick={() => fetchDashboardData(true)}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#EA580C] hover:brightness-110 text-xs font-black uppercase text-[#190B05] flex items-center gap-2 transition-all whitespace-nowrap shadow-lg active:scale-95"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
